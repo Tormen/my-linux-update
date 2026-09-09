@@ -8,7 +8,7 @@
 # License: do whatever
 #
 # Config search order (first hit wins):
-#   1. $LINKS/default/my-linux-update.conf  (if $LINKS is set)
+#   1. ${LINKS:-/LINKS}/default/my-linux-update.conf
 #   2. ~/.my-linux-update.conf
 #   3. /etc/my-linux-update.conf
 #   4. /usr/local/etc/my-linux-update.conf
@@ -93,7 +93,7 @@ Options:
   -V, --version               print version
 
 Config search order (first hit wins):
-  1. \$LINKS/default/${SCRIPT_NAME}.conf
+  1. \${LINKS:-/LINKS}/default/${SCRIPT_NAME}.conf
   2. ~/.${SCRIPT_NAME}.conf
   3. /etc/${SCRIPT_NAME}.conf
   4. /usr/local/etc/${SCRIPT_NAME}.conf
@@ -140,9 +140,11 @@ resolve_config() {
         echo "$CONFIG"
         return 0
     fi
-    # 1. $LINKS/default/
-    if [ -n "${LINKS:-}" ] && [ -r "$LINKS/default/${SCRIPT_NAME}.conf" ]; then
-        echo "$LINKS/default/${SCRIPT_NAME}.conf"
+    # 1. /LINKS/default/ -- the primary system-wide location.
+    #    NOT gated on $LINKS being exported: a root shell usually has no LINKS
+    #    in its environment, and the location was then skipped in silence.
+    if [ -r "${LINKS:-/LINKS}/default/${SCRIPT_NAME}.conf" ]; then
+        echo "${LINKS:-/LINKS}/default/${SCRIPT_NAME}.conf"
         return 0
     fi
     # 2. ~/
