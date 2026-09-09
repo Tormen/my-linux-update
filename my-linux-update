@@ -143,8 +143,13 @@ resolve_config() {
     # 1. /LINKS/default/ -- the primary system-wide location.
     #    NOT gated on $LINKS being exported: a root shell usually has no LINKS
     #    in its environment, and the location was then skipped in silence.
+    #    both spellings are accepted here: .conf first, then the bare name
     if [ -r "${LINKS:-/LINKS}/default/${SCRIPT_NAME}.conf" ]; then
         echo "${LINKS:-/LINKS}/default/${SCRIPT_NAME}.conf"
+        return 0
+    fi
+    if [ -r "${LINKS:-/LINKS}/default/${SCRIPT_NAME}" ]; then
+        echo "${LINKS:-/LINKS}/default/${SCRIPT_NAME}"
         return 0
     fi
     # 2. ~/
