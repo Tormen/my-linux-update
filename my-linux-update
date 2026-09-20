@@ -29,7 +29,7 @@ SCRIPT_NAME="my-linux-update"
 # it>-g<short sha>); both are written by 'stamp-version', so a deployed copy
 # with no git can still say what it is. VERSION names the release these bytes
 # are BASED on -- only a release commit sets it.
-SCRIPT_COMMIT="6c79024"
+SCRIPT_COMMIT="bd5c1f4"
 SCRIPT_RELEASE=""
 
 # The first 12 hex of this file's own SHA-256: the value that identifies the
@@ -45,11 +45,27 @@ _build_id() {
 # Git first (exact in a checkout), the stamp second: the stamp is written
 # BEFORE a release is tagged, so it lags one release step, and a deployed copy
 # has no git at all.
+# The directory holding the REAL file, symlinks resolved. /LINKS/bin/<tool> is
+# a farm link into ANOTHER repo, so asking git from there answers about THAT
+# repo -- and once it has a tag of its own, this tool would report a stranger's
+# release as its own.
+_self_dir() {
+  _sd_p=$0
+  while [ -L "$_sd_p" ]; do
+    _sd_t=$(readlink "$_sd_p") || break
+    case "$_sd_t" in
+      /*) _sd_p=$_sd_t ;;
+      *)  _sd_p=$(dirname "$_sd_p")/$_sd_t ;;
+    esac
+  done
+  (cd "$(dirname "$_sd_p")" 2>/dev/null && pwd -P)
+}
+
 _version_string() {
   _vs_b=$(_build_id)
   # '|| _vs_d=""': this script runs under 'set -e', and git describe exits
   # non-zero when there is no tag yet -- which is a normal state, not a failure.
-  _vs_d=$(git -c safe.directory='*' -C "$(dirname "$0")" describe --tags --long 2>/dev/null) || _vs_d=""
+  _vs_d=$(git -c safe.directory='*' -C "$(_self_dir)" describe --tags --long 2>/dev/null) || _vs_d=""
   [ -n "$_vs_d" ] || _vs_d=$SCRIPT_RELEASE
   case "$_vs_d" in
     *-*-g*)
